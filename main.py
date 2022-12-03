@@ -9,9 +9,9 @@ import openpyxl
 from openpyxl.worksheet.worksheet import Worksheet
 import re
 
-SOURCE_FILE = "/Users/marlon/Resilio Sync/Dokumente/Arbeit/Sonstiges/HerzBild/Rechnungsliste_HerzBild.xlsx"
-TEMPLATE_FILE = "/Users/marlon/Resilio Sync/Dokumente/Arbeit/Sonstiges/HerzBild/Musterrechnung_HerzBild_Vorlage.docx"
-MAHNUNG_TEMPLATE_FILE = "/Users/marlon/Resilio Sync/Dokumente/Arbeit/Sonstiges/HerzBild/Mahnung_HerzBild_Vorlage.docx"
+SOURCE_FILE = "Rechnungsliste_HerzBild.xlsx"
+TEMPLATE_FILE = "Vorlagen/Musterrechnung_HerzBild_Vorlage.docx"
+MAHNUNG_TEMPLATE_FILE = "Vorlagen/Mahnung_HerzBild_Vorlage.docx"
 
 pd.set_option("display.max_columns", None)
 today = date.today()
@@ -19,6 +19,7 @@ today_str = today.strftime("%d.%m.%Y")
 
 Path("neue_Rechnungen").mkdir(exist_ok=True)
 Path("neue_Mahnungen").mkdir(exist_ok=True)
+Path("Vorlagen").mkdir(exist_ok=True)
 
 
 def create_context(df: pd.Series) -> Dict:
