@@ -7,7 +7,7 @@ from datetime import date, datetime
 import traceback
 import readchar
 
-SOURCE_FILE = "/Users/marlon/Resilio Sync/Dokumente/Arbeit/Sonstiges/HerzBild/Rechnungsliste_HerzBild.xlsx"
+SOURCE_FILE = "Rechnungsliste_HerzBild.xlsx"
 
 pathlib.Path("Adresslisten").mkdir(exist_ok=True)
 file_list = [file.resolve() for file in pathlib.Path("Adresslisten").glob('**/*.[cC][sS][vV]')]
