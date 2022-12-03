@@ -84,11 +84,21 @@ versicherungen = {
 }
 
 
-def get_abrechnungsziffern(versicherung: str) -> Dict:
+def get_abrechnungsziffern(versicherung: str, abrechnungsziffern: str) -> Dict:
     _result = []
-    _tarif = versicherungen[versicherung]
+    if len(abrechnungsziffern) > 0:
+        try:
+            _ziffern_list = abrechnungsziffern.split(";")
+            _tarif = {}
+            for item in _ziffern_list:
+                item = item.strip(" ").split(",")
+                _tarif[item[0]] = float(item[1])
+        except:
+            raise KeyError("Die angegebenen Abrechnungsziffern haben nicht das richtige Format.")
+    else:
+        _tarif = versicherungen[versicherung]
     _gesamtsumme = 0
-    for index, ziffer in enumerate(gbo.keys(), start=1):
+    for index, ziffer in enumerate(_tarif.keys(), start=1):
         _dict = {'pos': index,
                  'gbo': ziffer,
                  'beschr': gbo[ziffer]['beschr'],

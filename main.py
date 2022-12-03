@@ -25,7 +25,7 @@ Path("Vorlagen").mkdir(exist_ok=True)
 
 
 def create_context(df: pd.Series) -> Dict:
-    _abrechnung = get_abrechnungsziffern(df.Versicherung)
+    _abrechnung = get_abrechnungsziffern(df.Versicherung, df.Abrechnungsziffern)
     # Calculate price of used drugs
     regex_meto = re.search(r"\d[^\dMm]*[Mm]", df.Medikamente)
     regex_beloc = re.search(r"\d[^\dBb]*[Bb]", df.Medikamente)
