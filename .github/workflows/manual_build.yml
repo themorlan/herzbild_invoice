@@ -1,0 +1,23 @@
+name: Package Application with Pyinstaller - manual trigger
+
+on:
+ workflow_dispatch:
+
+jobs:
+ build:
+   runs-on: ubuntu-latest
+   steps:
+   -
+     name: Checkout
+     uses: actions/checkout@v3
+   -
+     name: Compile exe
+     uses: JackMcKew/pyinstaller-action-windows@main
+     with:
+       path: ./
+   -
+     name: Upload artifact to workflow
+     uses: actions/upload-artifact@v3
+     with:
+       name: Rechnung_Mahnung_erstellen.exe
+       path: ./
