@@ -8,8 +8,6 @@ from pathlib import Path
 import openpyxl
 from openpyxl.worksheet.worksheet import Worksheet
 import re
-import traceback
-import readchar
 
 SOURCE_FILE = "Rechnungsliste_HerzBild.xlsx"
 TEMPLATE_FILE = "Vorlagen/Musterrechnung_HerzBild_Vorlage.docx"
@@ -192,10 +190,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except:
-        print(traceback.format_exc())
-    finally:
-        print("Drücke eine beliebige Taste um das Programm zu beenden...")
-        k = readchar.readchar()
+    main()

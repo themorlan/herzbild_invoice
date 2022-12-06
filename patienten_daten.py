@@ -4,8 +4,6 @@ from openpyxl.worksheet.worksheet import Worksheet
 import pathlib
 from typing import Union
 from datetime import date, datetime
-import traceback
-import readchar
 
 SOURCE_FILE = "Rechnungsliste_HerzBild.xlsx"
 
@@ -65,10 +63,4 @@ def main():
 
 
 if __name__ == '__main__':
-    try:
-        main()
-    except:
-        print(traceback.format_exc())
-    finally:
-        print("Drücke eine beliebige Taste um das Programm zu beenden...")
-        k = readchar.readchar()
+    main()
