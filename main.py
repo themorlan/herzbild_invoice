@@ -25,8 +25,9 @@ Path("Vorlagen").mkdir(exist_ok=True)
 def create_context(df: pd.Series) -> Dict:
     _abrechnung = get_abrechnungsziffern(df.Versicherung, df.Abrechnungsziffern)
     # Calculate price of used drugs
-    regex_meto = re.search(r"\d[^\dMm]*[Mm]", df.Medikamente)
+    regex_meto = re.search(r"\d[^\dMmAa]*[MmAa]", df.Medikamente)
     regex_beloc = re.search(r"\d[^\dBb]*[Bb]", df.Medikamente)
+    price_meto = 0.16 if regex_meto.group()[-1:] == "M" else 2
     if df.Medikamente != "" and regex_meto is not None or regex_beloc is not None:
         _med_dict = {
             'pos': len(_abrechnung['tabelle']) + 1,
@@ -42,11 +43,11 @@ def create_context(df: pd.Series) -> Dict:
             _count_meto = int(regex_meto.group(0)[0]) #0.16
             _count_beloc = int(regex_beloc.group(0)[0]) #4.30
             _med_dict['beschr'] += "oral und i.v."
-            _med_dict['betrag_raw'] = _count_meto * 0.16 + _count_beloc * 4.30
+            _med_dict['betrag_raw'] = _count_meto * price_meto + _count_beloc * 4.30
         elif regex_meto is not None:
             _count_meto = int(regex_meto.group(0)[0])  # 0.16
             _med_dict['beschr'] += "oral"
-            _med_dict['betrag_raw'] = _count_meto * 0.16
+            _med_dict['betrag_raw'] = _count_meto * price_meto
         elif regex_beloc is not None:
             _count_beloc = int(regex_beloc.group(0)[0])  # 4.30
             _med_dict['beschr'] += "i.v."
