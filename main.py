@@ -1,3 +1,9 @@
+# Wenn kein KM, dann rausnehmen
+# Kopie der Rechnung miterstellen
+# DATEV Export der Rechnungen für Fr. Ahlers
+# .0 für Medikamente
+# Medikamente für IGEL ?
+
 from docxtpl import DocxTemplate
 from datetime import date, datetime, timedelta
 import pandas as pd
@@ -27,7 +33,8 @@ def create_context(df: pd.Series) -> Dict:
     # Calculate price of used drugs
     regex_meto = re.search(r"\d[^\dMmAa]*[MmAa]", df.Medikamente)
     regex_beloc = re.search(r"\d[^\dBb]*[Bb]", df.Medikamente)
-    price_meto = 0.16 if regex_meto.group()[-1:] == "M" else 0.25
+    if regex_meto is not None:
+        price_meto = 0.16 if regex_meto.group()[-1:] == "M" else 0.25
     if df.Medikamente != "" and regex_meto is not None or regex_beloc is not None:
         _med_dict = {
             'pos': len(_abrechnung['tabelle']) + 1,
