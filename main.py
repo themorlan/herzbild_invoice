@@ -181,6 +181,7 @@ def write_excel(column: str, row, value):
 
 def main():
     data = read_excel()
+    datev_list = []
     for idx, row in data.iterrows():
         _context = create_context(row)
         if not row['Rechnung erstellt']:
@@ -191,11 +192,30 @@ def main():
                 write_excel(column='Rechnungsdatum', row=idx, value=today_str)
                 write_excel(column='Rechnung erstellt', row=idx, value=True)
                 write_excel(column='Rechnungsbetrag', row=idx, value=_context['Gesamtbetrag_raw'])
+            datev_list.append(_context)
         elif row['Rechnungsdatum'].date() < today - timedelta(days=30) and not row['Rechnung bezahlt']:
             create_mahnung(context=_context, export_filename=f"neue_Mahnungen/Mahnung_{row.Rechnungsnummer}_{row.Geburtsdatum.strftime('%d.%m.%Y')}.docx")
             write_excel(column='Mahnung', row=idx, value=True)
             write_excel(column='Mahndatum', row=idx, value=today_str)
-
+    datev = pd.DataFrame.from_dict(datev_list)
+    datev.rename(columns={"Gesamtbetrag": "Umsatz", "RG_Nummer": "Rechnungsnummer", "RG_Datum": "Buchungstag"}, inplace=True)
+    print(datev)
+"""    self.automatically_matched.to_csv(
+        file_name,
+        index=False,
+        sep=";",
+        encoding="UTF-8-sig",
+        columns=[
+            "Umsatz",
+            "Gegenkonto",
+            "Rechnungsnummer",
+            "Buchungstag",
+            "S/H",
+            "Erlöskonto",
+            "Buchungstext",
+        ],
+    )
+"""
 
 if __name__ == "__main__":
     main()
