@@ -1,8 +1,4 @@
-# Wenn kein KM, dann rausnehmen
-# Kopie der Rechnung miterstellen
 # DATEV Export der Rechnungen für Fr. Ahlers
-# .0 für Medikamente
-# Medikamente für IGEL ?
 
 from docxtpl import DocxTemplate
 from datetime import date, datetime, timedelta
@@ -41,7 +37,7 @@ def create_context(df: pd.Series) -> Dict:
             'gbo': "MEDHCT",
             'beschr': "Metoprolol ",
             'preis': "",
-            'faktor': 1,
+            'faktor': 1.0,
             'anzahl': '1',
             'betrag': "",
             'betrag_raw': 0.0,
@@ -67,6 +63,8 @@ def create_context(df: pd.Series) -> Dict:
     # Calculate price of contrast agent
     if df.Kontrastmittel == "":
         raise KeyError(f"Keine Kontrastmittelangabe für {df.Vorname} {df.Nachname} {df.Rechnungsnummer}")
+    elif df.Kontrastmittel == 0:
+        pass
     else:
         _km_dict = {
             'pos': len(_abrechnung['tabelle']) + 1,
@@ -74,7 +72,7 @@ def create_context(df: pd.Series) -> Dict:
             'beschr': f"Kontrastmittel {str(int(df.Kontrastmittel))} ml",
             'preis': format_currency(0.2 * df.Kontrastmittel, 'EUR', format='#.00', locale='de_DE',
                                      currency_digits=False),
-            'faktor': 1,
+            'faktor': 1.0,
             'anzahl': '1',
             'betrag': format_currency(0.2 * df.Kontrastmittel, 'EUR', format='#.00 ¤', locale='de_DE',
                                       currency_digits=False),
@@ -187,6 +185,8 @@ def main():
         _context = create_context(row)
         if not row['Rechnung erstellt']:
             create_invoice(context=_context, export_filename=f"neue_Rechnungen/Rechnung_{row.Rechnungsnummer}_{row.Geburtsdatum.strftime('%d.%m.%Y')}.docx")
+            _context["kopie"] = "KOPIE"
+            create_invoice(context=_context, export_filename=f"neue_Rechnungen/Kopie_Rechnung_{row.Rechnungsnummer}_{row.Geburtsdatum.strftime('%d.%m.%Y')}.docx")
             if row['Rechnungsdatum'].date() == today:
                 write_excel(column='Rechnungsdatum', row=idx, value=today_str)
                 write_excel(column='Rechnung erstellt', row=idx, value=True)
