@@ -43,8 +43,8 @@ def create_context(df: pd.Series) -> Dict:
             'betrag_raw': 0.0,
         }
         if regex_meto is not None and regex_beloc is not None:
-            _count_meto = int(regex_meto.group(0)[0]) #0.16
-            _count_beloc = int(regex_beloc.group(0)[0]) #4.30
+            _count_meto = int(regex_meto.group(0)[0])  # 0.16
+            _count_beloc = int(regex_beloc.group(0)[0])  # 4.30
             _med_dict['beschr'] += "oral und i.v."
             _med_dict['betrag_raw'] = _count_meto * price_meto + _count_beloc * 4.30
         elif regex_meto is not None:
@@ -55,8 +55,10 @@ def create_context(df: pd.Series) -> Dict:
             _count_beloc = int(regex_beloc.group(0)[0])  # 4.30
             _med_dict['beschr'] += "i.v."
             _med_dict['betrag_raw'] = _count_beloc * 4.30
-        _med_dict['preis'] = format_currency(_med_dict['betrag_raw'], 'EUR', format='#.00', locale='de_DE', currency_digits=False)
-        _med_dict['betrag'] = format_currency(_med_dict['betrag_raw'], 'EUR', format='#.00 ¤', locale='de_DE', currency_digits=False)
+        _med_dict['preis'] = format_currency(_med_dict['betrag_raw'], 'EUR', format='#.00', locale='de_DE',
+                                             currency_digits=False)
+        _med_dict['betrag'] = format_currency(_med_dict['betrag_raw'], 'EUR', format='#.00 ¤', locale='de_DE',
+                                              currency_digits=False)
         _abrechnung['tabelle'].append(_med_dict)
         _abrechnung['gesamtsumme_raw'] += _med_dict['betrag_raw']
 
@@ -82,7 +84,8 @@ def create_context(df: pd.Series) -> Dict:
         _abrechnung['gesamtsumme_raw'] += _km_dict['betrag_raw']
 
     # Gesamtsumme has to be recalculated after messing with entries for contrast media and drugs
-    _abrechnung['gesamtsumme'] = format_currency(_abrechnung['gesamtsumme_raw'], 'EUR', format='#.00 ¤', locale='de_DE', currency_digits=False)
+    _abrechnung['gesamtsumme'] = format_currency(_abrechnung['gesamtsumme_raw'], 'EUR', format='#.00 ¤', locale='de_DE',
+                                                 currency_digits=False)
 
     _context = {'Anrede': df.Anrede,
                 'Titel': df.Titel,
@@ -94,8 +97,10 @@ def create_context(df: pd.Series) -> Dict:
                 "RG_Datum": today_str,
                 "RG_Nummer": df.Rechnungsnummer,
                 "Druckdatum": df.Rechnungsdatum.strftime("%d.%m.%Y"),
-                "Bezahlt": format_currency(df['Bereits Bezahlt'], 'EUR', format='#.00 ¤', locale='de_DE', currency_digits=False),
-                "Restbetrag": format_currency(_abrechnung['gesamtsumme_raw'] - df['Bereits Bezahlt'], 'EUR', format='#.00 ¤', locale='de_DE', currency_digits=False),
+                "Bezahlt": format_currency(df['Bereits Bezahlt'], 'EUR', format='#.00 ¤', locale='de_DE',
+                                           currency_digits=False),
+                "Restbetrag": format_currency(_abrechnung['gesamtsumme_raw'] - df['Bereits Bezahlt'], 'EUR',
+                                              format='#.00 ¤', locale='de_DE', currency_digits=False),
                 "heute": today_str,
                 "Untersuchungsdatum": df.Untersuchungsdatum.strftime("%d.%m.%Y"),
                 "Geburtsdatum": df.Geburtsdatum.strftime("%d.%m.%Y"),
@@ -185,37 +190,44 @@ def main():
     for idx, row in data.iterrows():
         _context = create_context(row)
         if not row['Rechnung erstellt']:
-            create_invoice(context=_context, export_filename=f"neue_Rechnungen/Rechnung_{row.Rechnungsnummer}_{row.Geburtsdatum.strftime('%d.%m.%Y')}.docx")
+            create_invoice(context=_context,
+                           export_filename=f"neue_Rechnungen/Rechnung_{row.Rechnungsnummer}_{row.Geburtsdatum.strftime('%d.%m.%Y')}.docx")
             _context["kopie"] = "KOPIE"
-            create_invoice(context=_context, export_filename=f"neue_Rechnungen/Kopie_Rechnung_{row.Rechnungsnummer}_{row.Geburtsdatum.strftime('%d.%m.%Y')}.docx")
+            create_invoice(context=_context,
+                           export_filename=f"neue_Rechnungen/Kopie_Rechnung_{row.Rechnungsnummer}_{row.Geburtsdatum.strftime('%d.%m.%Y')}.docx")
             if row['Rechnungsdatum'].date() == today:
                 write_excel(column='Rechnungsdatum', row=idx, value=today_str)
                 write_excel(column='Rechnung erstellt', row=idx, value=True)
                 write_excel(column='Rechnungsbetrag', row=idx, value=_context['Gesamtbetrag_raw'])
+            _context["Buchungstext"] = f"{_context['Nachname']} {str(_context['RG_Nummer'])[2:]}"
+            _context["Gesamtbetrag"] = _context["Gesamtbetrag"][:-2]
             datev_list.append(_context)
         elif row['Rechnungsdatum'].date() < today - timedelta(days=30) and not row['Rechnung bezahlt']:
-            create_mahnung(context=_context, export_filename=f"neue_Mahnungen/Mahnung_{row.Rechnungsnummer}_{row.Geburtsdatum.strftime('%d.%m.%Y')}.docx")
+            create_mahnung(context=_context,
+                           export_filename=f"neue_Mahnungen/Mahnung_{row.Rechnungsnummer}_{row.Geburtsdatum.strftime('%d.%m.%Y')}.docx")
             write_excel(column='Mahnung', row=idx, value=True)
             write_excel(column='Mahndatum', row=idx, value=today_str)
     datev = pd.DataFrame.from_dict(datev_list)
-    datev.rename(columns={"Gesamtbetrag": "Umsatz", "RG_Nummer": "Rechnungsnummer", "RG_Datum": "Buchungstag"}, inplace=True)
+    datev.rename(columns={"Gesamtbetrag": "Umsatz", "RG_Nummer": "Rechnungsnummer", "RG_Datum": "Buchungstag"},
+                 inplace=True)
+    datev["S/H"] = "H"
+    datev["Gegenkonto"] = "1205"
+    datev["Erlöskonto"] = "?"
     print(datev)
-"""    self.automatically_matched.to_csv(
-        file_name,
-        index=False,
-        sep=";",
-        encoding="UTF-8-sig",
-        columns=[
-            "Umsatz",
-            "Gegenkonto",
-            "Rechnungsnummer",
-            "Buchungstag",
-            "S/H",
-            "Erlöskonto",
-            "Buchungstext",
-        ],
-    )
-"""
+    datev.to_csv(f"neue_Rechnungen/Datev_export_{today_str}.csv",
+                 index=False,
+                 sep=";",
+                 encoding="UTF-8-sig",
+                 columns=[
+                     "Umsatz",
+                     "Gegenkonto",
+                     "Rechnungsnummer",
+                     "Buchungstag",
+                     "S/H",
+                     "Erlöskonto",
+                     "Buchungstext", ],
+                 )
+
 
 if __name__ == "__main__":
     main()
