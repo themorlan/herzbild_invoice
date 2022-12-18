@@ -213,7 +213,6 @@ def main():
     datev["S/H"] = "H"
     datev["Gegenkonto"] = "1205"
     datev["Erlöskonto"] = "?"
-    print(datev)
     datev.to_csv(f"neue_Rechnungen/Datev_export_{today_str}.csv",
                  index=False,
                  sep=";",
