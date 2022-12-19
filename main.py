@@ -1,5 +1,3 @@
-# DATEV Export der Rechnungen für Fr. Ahlers
-
 from docxtpl import DocxTemplate
 from datetime import date, datetime, timedelta
 import pandas as pd
@@ -66,7 +64,16 @@ def create_context(df: pd.Series) -> Dict:
     if df.Kontrastmittel == "":
         raise KeyError(f"Keine Kontrastmittelangabe für {df.Vorname} {df.Nachname} {df.Rechnungsnummer}")
     elif df.Kontrastmittel == 0:
-        pass
+        _abrechnung['gesamtsumme_raw'] = 0
+        _list_buffer = []
+        for item in _abrechnung['tabelle']:
+            if item['gbo'] not in ["DR", "346", "5377"]:
+                _list_buffer.append(item)
+        _abrechnung['tabelle'].clear()
+        _abrechnung['tabelle'].extend(_list_buffer)
+        for idx, item in enumerate(_abrechnung['tabelle'], start=1):
+            item['pos'] = idx
+            _abrechnung['gesamtsumme_raw'] += item['betrag_raw']
     else:
         _km_dict = {
             'pos': len(_abrechnung['tabelle']) + 1,
@@ -208,11 +215,11 @@ def main():
             write_excel(column='Mahnung', row=idx, value=True)
             write_excel(column='Mahndatum', row=idx, value=today_str)
     datev = pd.DataFrame.from_dict(datev_list)
-    datev.rename(columns={"Gesamtbetrag": "Umsatz", "RG_Nummer": "Rechnungsnummer", "RG_Datum": "Buchungstag"},
+    datev.rename(columns={"Gesamtbetrag": "Umsatz", "RG_Nummer": "Rechnungsnummer", "RG_Datum": "Belegdatum"},
                  inplace=True)
     datev["S/H"] = "H"
-    datev["Gegenkonto"] = "1205"
-    datev["Erlöskonto"] = "?"
+    datev["Gegenkonto"] = "1410"
+    datev["Erlöskonto"] = "8000"
     datev.to_csv(f"neue_Rechnungen/Datev_export_{today_str}.csv",
                  index=False,
                  sep=";",
@@ -221,7 +228,7 @@ def main():
                      "Umsatz",
                      "Gegenkonto",
                      "Rechnungsnummer",
-                     "Buchungstag",
+                     "Belegdatum",
                      "S/H",
                      "Erlöskonto",
                      "Buchungstext", ],
