@@ -67,7 +67,7 @@ def create_context(df: pd.Series) -> Dict:
         _abrechnung['gesamtsumme_raw'] = 0
         _list_buffer = []
         for item in _abrechnung['tabelle']:
-            if item['gbo'] not in ["DR", "346", "5377"]:
+            if item['gbo'] not in ["DR", "346", "5376"]:
                 _list_buffer.append(item)
         _abrechnung['tabelle'].clear()
         _abrechnung['tabelle'].extend(_list_buffer)
