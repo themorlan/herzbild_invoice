@@ -204,8 +204,8 @@ def main():
                            export_filename=f"neue_Rechnungen/Kopie_Rechnung_{row.Rechnungsnummer}_{row.Geburtsdatum.strftime('%d.%m.%Y')}.docx")
             if row['Rechnungsdatum'].date() == today:
                 write_excel(column='Rechnungsdatum', row=idx, value=today_str)
-                write_excel(column='Rechnung erstellt', row=idx, value=True)
                 write_excel(column='Rechnungsbetrag', row=idx, value=_context['Gesamtbetrag_raw'])
+            write_excel(column='Rechnung erstellt', row=idx, value=True)
             _context["Buchungstext"] = f"{_context['Nachname']} {str(_context['RG_Nummer'])[2:]}"
             _context["Gesamtbetrag"] = _context["Gesamtbetrag"][:-2]
             datev_list.append(_context)
