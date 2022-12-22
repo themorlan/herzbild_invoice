@@ -43,11 +43,14 @@ def create_context(df: pd.Series) -> Dict:
         if regex_meto is not None and regex_beloc is not None:
             _count_meto = int(regex_meto.group(0)[0])  # 0.16
             _count_beloc = int(regex_beloc.group(0)[0])  # 4.30
-            _med_dict['beschr'] += "oral und i.v."
+            _med_dict['beschr'] += "oral und i.v." if price_meto == 0.16 else "i.v., Atenolol oral"
             _med_dict['betrag_raw'] = _count_meto * price_meto + _count_beloc * 4.30
         elif regex_meto is not None:
             _count_meto = int(regex_meto.group(0)[0])  # 0.16
-            _med_dict['beschr'] += "oral"
+            if price_meto == 0.16:
+                _med_dict['beschr'] += "oral"
+            else:
+                _med_dict['beschr'] = "Atenolol oral"
             _med_dict['betrag_raw'] = _count_meto * price_meto
         elif regex_beloc is not None:
             _count_beloc = int(regex_beloc.group(0)[0])  # 4.30
