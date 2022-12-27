@@ -1,3 +1,5 @@
+#TODO: Archive .xlsx file on run?
+
 from docxtpl import DocxTemplate
 from datetime import date, datetime, timedelta
 import pandas as pd
