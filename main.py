@@ -30,7 +30,7 @@ def create_context(df: pd.Series) -> Dict:
     regex_meto = re.search(r"\d[^\dMmAa]*[MmAa]", df.Medikamente)
     regex_beloc = re.search(r"\d[^\dBb]*[Bb]", df.Medikamente)
     if regex_meto is not None:
-        price_meto = 0.16 if regex_meto.group()[-1:] == "M" else 0.25
+        price_meto = 0.16 if regex_meto.group()[-1:] == "M" else 0.23
     if df.Medikamente != "" and regex_meto is not None or regex_beloc is not None:
         _med_dict = {
             'pos': len(_abrechnung['tabelle']) + 1,
@@ -44,9 +44,9 @@ def create_context(df: pd.Series) -> Dict:
         }
         if regex_meto is not None and regex_beloc is not None:
             _count_meto = int(regex_meto.group(0)[0])  # 0.16
-            _count_beloc = int(regex_beloc.group(0)[0])  # 4.30
+            _count_beloc = int(regex_beloc.group(0)[0])  # 5.12
             _med_dict['beschr'] += "oral und i.v." if price_meto == 0.16 else "i.v., Atenolol oral"
-            _med_dict['betrag_raw'] = _count_meto * price_meto + _count_beloc * 4.30
+            _med_dict['betrag_raw'] = _count_meto * price_meto + _count_beloc * 5.12
         elif regex_meto is not None:
             _count_meto = int(regex_meto.group(0)[0])  # 0.16
             if price_meto == 0.16:
@@ -55,9 +55,9 @@ def create_context(df: pd.Series) -> Dict:
                 _med_dict['beschr'] = "Atenolol oral"
             _med_dict['betrag_raw'] = _count_meto * price_meto
         elif regex_beloc is not None:
-            _count_beloc = int(regex_beloc.group(0)[0])  # 4.30
+            _count_beloc = int(regex_beloc.group(0)[0])  # 5.12
             _med_dict['beschr'] += "i.v."
-            _med_dict['betrag_raw'] = _count_beloc * 4.30
+            _med_dict['betrag_raw'] = _count_beloc * 5.12
         _med_dict['preis'] = format_currency(_med_dict['betrag_raw'], 'EUR', format='#.00', locale='de_DE',
                                              currency_digits=False)
         _med_dict['betrag'] = format_currency(_med_dict['betrag_raw'], 'EUR', format='#.00 ¤', locale='de_DE',
