@@ -106,7 +106,7 @@ def create_context(df: pd.Series) -> Dict:
                 'Strasse': df.Strasse,
                 'PLZ': df.PLZ,
                 'Stadt': df.Wohnort,
-                "RG_Datum": today_str,
+                "RG_Datum": df.Rechnungsdatum.strftime("%d.%m.%Y"),
                 "RG_Nummer": df.Rechnungsnummer,
                 "Druckdatum": df.Rechnungsdatum.strftime("%d.%m.%Y"),
                 "Bezahlt": format_currency(df['Bereits Bezahlt'], 'EUR', format='#.00 ¤', locale='de_DE',
@@ -209,18 +209,18 @@ def main():
                            export_filename=f"neue_Rechnungen/Kopie_Rechnung_{row.Rechnungsnummer}_{row.Geburtsdatum.strftime('%d.%m.%Y')}.docx")
             if row['Rechnungsdatum'].date() == today:
                 write_excel(column='Rechnungsdatum', row=idx, value=today_str)
-                write_excel(column='Rechnungsbetrag', row=idx, value=_context['Gesamtbetrag_raw'])
+            write_excel(column='Rechnungsbetrag', row=idx, value=_context['Gesamtbetrag_raw'])
             write_excel(column='Rechnung erstellt', row=idx, value=True)
             _context["Buchungstext"] = f"{_context['Nachname']} {str(_context['RG_Nummer'])[2:]}"
             _context["Gesamtbetrag"] = _context["Gesamtbetrag"][:-2]
             datev_list.append(_context)
-        elif row['Rechnungsdatum'].date() < today - timedelta(days=30) and not row['Rechnung bezahlt']:
+        elif row.Mahnung and pd.isnull(row.Mahndatum):
             create_mahnung(context=_context,
                            export_filename=f"neue_Mahnungen/Mahnung_{row.Rechnungsnummer}_{row.Geburtsdatum.strftime('%d.%m.%Y')}.docx")
             write_excel(column='Mahnung', row=idx, value=True)
             write_excel(column='Mahndatum', row=idx, value=today_str)
     datev = pd.DataFrame.from_dict(datev_list)
-    datev.rename(columns={"Gesamtbetrag": "Umsatz", "RG_Nummer": "Rechnungsnummer", "RG_Datum": "Belegdatum"},
+    datev.rename(columns={"Gesamtbetrag": "Umsatz", "RG_Nummer": "Rechnungsnummer", "RG_Datum": "Belegdatum", "Untersuchungsdatum": "Leistungsdatum"},
                  inplace=True)
     datev["S/H"] = "H"
     datev["Gegenkonto"] = "1410"
@@ -236,7 +236,8 @@ def main():
                      "Belegdatum",
                      "S/H",
                      "Erlöskonto",
-                     "Buchungstext", ],
+                     "Buchungstext",
+                     "Leistungsdatum"],
                  )
 
 
