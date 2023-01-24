@@ -211,7 +211,7 @@ def main():
                 write_excel(column='Rechnungsdatum', row=idx, value=today_str)
             write_excel(column='Rechnungsbetrag', row=idx, value=_context['Gesamtbetrag_raw'])
             write_excel(column='Rechnung erstellt', row=idx, value=True)
-            _context["Buchungstext"] = f"{_context['Nachname']} {str(_context['RG_Nummer'])[2:]}"
+            _context["Buchungstext"] = f"{_context['Nachname']} {str(_context['RG_Nummer'])[1:]}"
             _context["Gesamtbetrag"] = _context["Gesamtbetrag"][:-2]
             datev_list.append(_context)
         elif row.Mahnung and pd.isnull(row.Mahndatum):
@@ -225,7 +225,7 @@ def main():
     datev["S/H"] = "H"
     datev["Gegenkonto"] = "1410"
     datev["Erlöskonto"] = "8000"
-    datev.to_csv(f"neue_Rechnungen/Datev_export_{today_str}.csv",
+    datev.to_csv(f"neue_Rechnungen/HerzBild_Datev_export_{today_str}.csv",
                  index=False,
                  sep=";",
                  encoding="UTF-8-sig",
