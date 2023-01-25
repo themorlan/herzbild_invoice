@@ -81,6 +81,17 @@ versicherungen = {
              "5376": 1.80,
              "60": 1.00,
              },
+    "IGEL2": {"1": 1.00,
+             "5": 1.00,
+             "75": 1.00,
+             "DR": 1.00,
+             "346": 1.00,
+             "650": 1.00,
+             "5371": 2.20,
+             "5377": 1.00,
+             "5376": 1.80,
+             "60": 1.00,
+             },
 }
 
 
@@ -108,9 +119,9 @@ def get_abrechnungsziffern(versicherung: str, abrechnungsziffern: str) -> Dict:
                  'anzahl': '1',
                  'betrag': format_currency(gbo[ziffer]['preis'] * _tarif[ziffer], 'EUR', format='#.00 ¤',
                                            locale='de_DE', currency_digits=False),
-                 'betrag_raw': gbo[ziffer]['preis'] * _tarif[ziffer],
+                 'betrag_raw': round(gbo[ziffer]['preis'] * _tarif[ziffer], 2),
                  }
-        _gesamtsumme += gbo[ziffer]['preis'] * _tarif[ziffer]
+        _gesamtsumme += _dict['betrag_raw']
         _result.append(_dict)
     return {'tabelle': _result,
             'gesamtsumme': format_currency(_gesamtsumme, 'EUR', format='#.00 ¤', locale='de_DE', currency_digits=False),

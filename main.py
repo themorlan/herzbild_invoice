@@ -201,6 +201,8 @@ def main():
     datev_list = []
     for idx, row in data.iterrows():
         _context = create_context(row)
+        if row['Nachname'] == "Glander":
+            pass
         if not row['Rechnung erstellt']:
             create_invoice(context=_context,
                            export_filename=f"neue_Rechnungen/Rechnung_{row.Rechnungsnummer}_{row.Geburtsdatum.strftime('%d.%m.%Y')}.docx")
