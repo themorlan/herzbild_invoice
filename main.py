@@ -62,6 +62,7 @@ def create_context(df: pd.Series) -> Dict:
                                              currency_digits=False)
         _med_dict['betrag'] = format_currency(_med_dict['betrag_raw'], 'EUR', format='#.00 ¤', locale='de_DE',
                                               currency_digits=False)
+        _med_dict['anzahl'] = f"{_count_meto + _count_beloc}"
         _abrechnung['tabelle'].append(_med_dict)
         _abrechnung['gesamtsumme_raw'] += _med_dict['betrag_raw']
 
