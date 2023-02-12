@@ -228,20 +228,20 @@ def main():
     datev["S/H"] = "H"
     datev["Gegenkonto"] = "1410"
     datev["Erlöskonto"] = "8000"
-    datev.to_csv(f"neue_Rechnungen/HerzBild_Datev_export_{today_str}.csv",
-                 index=False,
-                 sep=";",
-                 encoding="UTF-8-sig",
-                 columns=[
-                     "Umsatz",
-                     "Gegenkonto",
-                     "Rechnungsnummer",
-                     "Belegdatum",
-                     "S/H",
-                     "Erlöskonto",
-                     "Buchungstext",
-                     "Leistungsdatum"],
-                 )
+    if not datev.empty:
+        datev.to_csv(f"neue_Rechnungen/HerzBild_Datev_export_{today_str}.csv",
+                     index=False,
+                     sep=";",
+                     encoding="UTF-8-sig",
+                     columns=[
+                         "Umsatz",
+                         "Gegenkonto",
+                         "Rechnungsnummer",
+                         "Belegdatum",
+                         "S/H",
+                         "Erlöskonto",
+                         "Buchungstext",
+                         "Leistungsdatum"],)
 
 
 if __name__ == "__main__":
