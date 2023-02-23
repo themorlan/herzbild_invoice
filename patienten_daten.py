@@ -54,6 +54,10 @@ def main():
         sheet.cell(row=_row_nr, column=get_column_index('Vorname', _header) + 1, value=_match['Vorname'].item())
         sheet.cell(row=_row_nr, column=get_column_index('Nachname', _header) + 1, value=_match['Name'].item())
         sheet.cell(row=_row_nr, column=get_column_index('Fallnummer', _header) + 1, value=int(_match['Fallnummer'].item()))
+        sheet.cell(row=_row_nr, column=get_column_index('Rechnung erstellt', _header) + 1, value=False)
+        sheet.cell(row=_row_nr, column=get_column_index('Mahnung', _header) + 1, value=False)
+        sheet.cell(row=_row_nr, column=get_column_index('Storno', _header) + 1, value=False)
+        sheet.cell(row=_row_nr, column=get_column_index('Rechnung geschlossen', _header) + 1, value=False)
         if not _match['Adresse'].isna().any():
             _adresse = _match['Adresse'].item().split(", ")
             sheet.cell(row=_row_nr, column=get_column_index('Strasse', _header) + 1, value=_adresse[0])
