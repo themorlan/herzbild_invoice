@@ -10,6 +10,7 @@ from pathlib import Path
 import openpyxl
 from openpyxl.worksheet.worksheet import Worksheet
 import re
+import pyautogui
 
 SOURCE_FILE = "Rechnungsliste_HerzBild.xlsx"
 TEMPLATE_FILE = "Vorlagen/Musterrechnung_HerzBild_Vorlage.docx"
@@ -162,6 +163,7 @@ def read_excel() -> pd.DataFrame:
               'Mahnung': bool,
               'Mahndatum': 'string',
               'Bereits Bezahlt': 'float64',
+              'Zahlungseingang': 'string',
               'Rechnung geschlossen': bool,
               'Rechnungsbetrag': 'float64',
               'Kontrastmittel': 'float64',
@@ -170,7 +172,11 @@ def read_excel() -> pd.DataFrame:
               }
     # Dates are first read as str and then converted to datetime objects
     date_cols = ['Rechnungsdatum', 'Untersuchungsdatum', 'Geburtsdatum', 'Mahndatum']
-    df = pd.read_excel(SOURCE_FILE, dtype=dtypes, header=1)
+    try:
+        df = pd.read_excel(SOURCE_FILE, dtype=dtypes, header=1)
+    except ValueError:
+        pyautogui.alert(text="Fehler beim Einlesen der HerzBild-Liste. Möglicherweise fehlende Werte (z.B. Lfd. Nummer oder Rechnungsnummer).", title="Einlesefehler!", button="OK")
+        raise ValueError
     df[date_cols] = df[date_cols].apply(pd.to_datetime, errors='coerce', dayfirst=True)
     # Templates can't deal with NaN - float values. Convert them to empty strings
     df = df.fillna("")
