@@ -27,7 +27,6 @@ Path("neue_Mahnungen").mkdir(exist_ok=True)
 Path("Vorlagen").mkdir(exist_ok=True)
 
 
-# Don't forget IGEL2 bzw. IGEL_alt
 def create_context(df: pd.Series) -> Dict:
     _abrechnung = get_abrechnungsziffern(df.Versicherung, df.Abrechnungsziffern)
     lfd_nummer_tabelle = len(_abrechnung['tabelle']) + 1
