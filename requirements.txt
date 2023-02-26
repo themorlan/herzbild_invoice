@@ -3,3 +3,4 @@ openpyxl
 PyAutoGUI
 docxtpl
 Babel
+kaleido
