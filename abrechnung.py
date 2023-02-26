@@ -1,5 +1,6 @@
-from typing import Dict
+from typing import Dict, List
 from babel.numbers import format_currency
+from datetime import datetime
 
 gbo = {
     "1": {"beschr": "Beratung auch telefonisch", "preis": 4.66},
@@ -13,6 +14,29 @@ gbo = {
     "5376": {"beschr": "CT, ergänzende Serie zusätzlich zu 5370-5375", "preis": 29.14},
     "60": {"beschr": "Konsilium", "preis": 6.99},
 }
+
+medikamente = {"Metoprolol_oral": {"gbo": "",
+                                   "beschr": "Metoprolol oral",
+                                   "regex": r"\d[^\dMm]*[Mm]",
+                                   "prices": {datetime(2022, 10, 1): 0.16,
+                                              }
+                                   },
+               "Metoprolol_iv": {"gbo": "",
+                                 "beschr": "Metoprolol i.v.",
+                                 "regex": r"\d[^\dAa]*[Aa]",
+                                 "prices": {datetime(2022, 10, 1): 4.30,
+                                            datetime(2023, 1, 3): 5.12,
+                                            }
+                                 },
+               "Atenolol": {"gbo": "",
+                            "beschr": "Atenolol oral",
+                            "regex": r"\d[^\dBb]*[Bb]",
+                            "prices": {datetime(2022, 12, 14): 0.25,
+                                       datetime(2023, 1, 3): 0.23,
+                                       }
+                            },
+               }
+
 
 versicherungen = {
     "Selbstzahler": {"1": 2.30,
@@ -82,16 +106,16 @@ versicherungen = {
              "60": 1.00,
              },
     "IGEL2": {"1": 1.00,
-             "5": 1.00,
-             "75": 1.00,
-             "DR": 1.00,
-             "346": 1.00,
-             "650": 1.00,
-             "5371": 2.20,
-             "5377": 1.00,
-             "5376": 1.80,
-             "60": 1.00,
-             },
+              "5": 1.00,
+              "75": 1.00,
+              "DR": 1.00,
+              "346": 1.00,
+              "650": 1.00,
+              "5371": 2.20,
+              "5377": 1.00,
+              "5376": 1.80,
+              "60": 1.00,
+              },
 }
 
 
@@ -126,3 +150,32 @@ def get_abrechnungsziffern(versicherung: str, abrechnungsziffern: str) -> Dict:
     return {'tabelle': _result,
             'gesamtsumme': format_currency(_gesamtsumme, 'EUR', format='#.00 ¤', locale='de_DE', currency_digits=False),
             'gesamtsumme_raw': _gesamtsumme}
+
+
+def find_associated_date(input_date: datetime, dates_list: List[datetime]):
+    # initialize variables for closest older date and time difference
+    closest_date = None
+    min_time_diff = None
+
+    # loop through dates in list
+    for date in dates_list:
+        # calculate time difference between input date and list date
+        time_diff = input_date - date
+
+        # check if list date is older than input date
+        if time_diff.days > 0:
+            # check if this is the first older date found or if it's closer than previous closest date
+            if closest_date is None or time_diff < min_time_diff:
+                closest_date = date
+                min_time_diff = time_diff
+    if closest_date is None:
+        raise ValueError(
+            f"Es konnte kein Medikamentenpreis für das Datum {input_date.strftime('%d.%m.%Y')} gefunden werden.")
+
+    # print closest older date found
+    return closest_date
+
+
+def find_correct_drug_prizes(untersuchungsdatum: datetime, drug_name: str) -> float:
+    _dict = medikamente[drug_name]
+    return _dict["prices"][find_associated_date(untersuchungsdatum, _dict["prices"].keys())]

@@ -1,14 +1,15 @@
-#TODO: Archive .xlsx file on run?
+# TODO: Archive .xlsx file on run?
 
 from docxtpl import DocxTemplate
 from datetime import date, datetime, timedelta
 import pandas as pd
-from abrechnung import get_abrechnungsziffern
-from typing import Dict
+from abrechnung import get_abrechnungsziffern, find_correct_drug_prizes, medikamente
+from typing import Dict, Tuple
 from babel.numbers import format_currency
 from pathlib import Path
 import openpyxl
 from openpyxl.worksheet.worksheet import Worksheet
+from openpyxl.workbook.workbook import Workbook
 import re
 import pyautogui
 
@@ -25,49 +26,30 @@ Path("neue_Mahnungen").mkdir(exist_ok=True)
 Path("Vorlagen").mkdir(exist_ok=True)
 
 
+# Don't forget IGEL2 bzw. IGEL_alt
 def create_context(df: pd.Series) -> Dict:
     _abrechnung = get_abrechnungsziffern(df.Versicherung, df.Abrechnungsziffern)
-    # Calculate price of used drugs
-    regex_meto = re.search(r"\d[^\dMmAa]*[MmAa]", df.Medikamente)
-    regex_beloc = re.search(r"\d[^\dBb]*[Bb]", df.Medikamente)
-    if regex_meto is not None:
-        price_meto = 0.16 if regex_meto.group()[-1:] == "M" else 0.23
-    if df.Medikamente != "" and regex_meto is not None or regex_beloc is not None:
-        _med_dict = {
-            'pos': len(_abrechnung['tabelle']) + 1,
-            'gbo': "MEDHCT",
-            'beschr': "Metoprolol ",
-            'preis': "",
-            'faktor': 1.0,
-            'anzahl': '1',
-            'betrag': "",
-            'betrag_raw': 0.0,
-        }
-        if regex_meto is not None and regex_beloc is not None:
-            _count_meto = int(regex_meto.group(0)[0])  # 0.16
-            _count_beloc = int(regex_beloc.group(0)[0])  # 5.12
-            _med_dict['beschr'] += "oral und i.v." if price_meto == 0.16 else "i.v., Atenolol oral"
-            _med_dict['betrag_raw'] = _count_meto * price_meto + _count_beloc * 5.12
-        elif regex_meto is not None:
-            _count_beloc = 0
-            _count_meto = int(regex_meto.group(0)[0])  # 0.16
-            if price_meto == 0.16:
-                _med_dict['beschr'] += "oral"
-            else:
-                _med_dict['beschr'] = "Atenolol oral"
-            _med_dict['betrag_raw'] = _count_meto * price_meto
-        elif regex_beloc is not None:
-            _count_meto = 0
-            _count_beloc = int(regex_beloc.group(0)[0])  # 5.12
-            _med_dict['beschr'] += "i.v."
-            _med_dict['betrag_raw'] = _count_beloc * 5.12
-        _med_dict['preis'] = format_currency(_med_dict['betrag_raw'], 'EUR', format='#.00', locale='de_DE',
-                                             currency_digits=False)
-        _med_dict['betrag'] = format_currency(_med_dict['betrag_raw'], 'EUR', format='#.00 ¤', locale='de_DE',
-                                              currency_digits=False)
-        _med_dict['anzahl'] = f"{_count_meto + _count_beloc}"
-        _abrechnung['tabelle'].append(_med_dict)
-        _abrechnung['gesamtsumme_raw'] += _med_dict['betrag_raw']
+    lfd_nummer_tabelle = len(_abrechnung['tabelle']) + 1
+    if df.Medikamente != "":
+        for drug_name, data in medikamente.items():
+            regex_search = re.search(data['regex'], df.Medikamente)
+            if regex_search is None:
+                continue
+            drug_count = int(regex_search.group(0)[0])
+            price = find_correct_drug_prizes(df.Rechnungsdatum, drug_name)
+            _med_dict = {
+                'pos': lfd_nummer_tabelle,
+                'gbo': data['gbo'],
+                'beschr': data['beschr'],
+                'preis': format_currency(price, 'EUR', format='#.00', locale='de_DE', currency_digits=False),
+                'faktor': 1.0,
+                'anzahl': str(drug_count),
+                'betrag': format_currency(drug_count * price, 'EUR', format='#.00 ¤', locale='de_DE', currency_digits=False),
+                'betrag_raw': drug_count * price,
+            }
+            lfd_nummer_tabelle += 1
+            _abrechnung['tabelle'].append(_med_dict)
+            _abrechnung['gesamtsumme_raw'] += _med_dict['betrag_raw']
 
     # Calculate price of contrast agent
     if df.Kontrastmittel == "":
@@ -175,7 +157,9 @@ def read_excel() -> pd.DataFrame:
     try:
         df = pd.read_excel(SOURCE_FILE, dtype=dtypes, header=1)
     except ValueError:
-        pyautogui.alert(text="Fehler beim Einlesen der HerzBild-Liste. Möglicherweise fehlende Werte (z.B. Lfd. Nummer oder Rechnungsnummer).", title="Einlesefehler!", button="OK")
+        pyautogui.alert(
+            text="Fehler beim Einlesen der HerzBild-Liste. Möglicherweise fehlende Werte (z.B. Lfd. Nummer oder Rechnungsnummer).",
+            title="Einlesefehler!", button="OK")
         raise ValueError
     df[date_cols] = df[date_cols].apply(pd.to_datetime, errors='coerce', dayfirst=True)
     # Templates can't deal with NaN - float values. Convert them to empty strings
@@ -189,7 +173,7 @@ def read_excel() -> pd.DataFrame:
     return df
 
 
-def write_excel(column: str, row, value):
+def initialize_excel_writer():
     book = openpyxl.load_workbook(SOURCE_FILE)
     sheet: Worksheet = book['Rechnungsliste']
     _values = list(sheet.values)
@@ -198,15 +182,21 @@ def write_excel(column: str, row, value):
         if "Rechnungsnummer" in _tuple:
             _header_index = index
             break
-    _column_index = _values[_header_index].index(column) + 1
+    header_row = _values[_header_index]
+    return book, header_row
+
+
+def write_excel(excel_book: Tuple[Workbook, Tuple[str]], column: str, row: int, value):
+    _column_index = excel_book[1].index(column) + 1
+    sheet: Worksheet = excel_book[0]['Rechnungsliste']
     # Row index needs + 3 cause header index is 0-based and idx argument of row is also 0-based
     _row_index = row + 3
     sheet.cell(row=_row_index, column=_column_index, value=value)
-    book.save(SOURCE_FILE)
 
 
 def main():
     data = read_excel()
+    excel_book = initialize_excel_writer()
     datev_list = []
     for idx, row in data.iterrows():
         _context = create_context(row)
@@ -217,19 +207,20 @@ def main():
             create_invoice(context=_context,
                            export_filename=f"neue_Rechnungen/Kopie_Rechnung_{row.Rechnungsnummer}_{row.Geburtsdatum.strftime('%d.%m.%Y')}.docx")
             if row['Rechnungsdatum'].date() == today:
-                write_excel(column='Rechnungsdatum', row=idx, value=today_str)
-            write_excel(column='Rechnungsbetrag', row=idx, value=_context['Gesamtbetrag_raw'])
-            write_excel(column='Rechnung erstellt', row=idx, value=True)
+                write_excel(excel_book=excel_book, column='Rechnungsdatum', row=idx, value=today_str)
+            write_excel(excel_book=excel_book, column='Rechnungsbetrag', row=idx, value=_context['Gesamtbetrag_raw'])
+            write_excel(excel_book=excel_book, column='Rechnung erstellt', row=idx, value=True)
             _context["Buchungstext"] = f"{_context['Nachname']} {str(_context['RG_Nummer'])[1:]}"
             _context["Gesamtbetrag"] = _context["Gesamtbetrag"][:-2]
             datev_list.append(_context)
         elif row.Mahnung and pd.isnull(row.Mahndatum):
             create_mahnung(context=_context,
                            export_filename=f"neue_Mahnungen/Mahnung_{row.Rechnungsnummer}_{row.Geburtsdatum.strftime('%d.%m.%Y')}.docx")
-            write_excel(column='Mahnung', row=idx, value=True)
-            write_excel(column='Mahndatum', row=idx, value=today_str)
+            write_excel(excel_book=excel_book, column='Mahnung', row=idx, value=True)
+            write_excel(excel_book=excel_book, column='Mahndatum', row=idx, value=today_str)
     datev = pd.DataFrame.from_dict(datev_list)
-    datev.rename(columns={"Gesamtbetrag": "Umsatz", "RG_Nummer": "Rechnungsnummer", "RG_Datum": "Belegdatum", "Untersuchungsdatum": "Leistungsdatum"},
+    datev.rename(columns={"Gesamtbetrag": "Umsatz", "RG_Nummer": "Rechnungsnummer", "RG_Datum": "Belegdatum",
+                          "Untersuchungsdatum": "Leistungsdatum"},
                  inplace=True)
     datev["S/H"] = "H"
     datev["Gegenkonto"] = "1410"
@@ -247,7 +238,8 @@ def main():
                          "S/H",
                          "Erlöskonto",
                          "Buchungstext",
-                         "Leistungsdatum"],)
+                         "Leistungsdatum"], )
+    excel_book[0].save(SOURCE_FILE)
 
 
 if __name__ == "__main__":
