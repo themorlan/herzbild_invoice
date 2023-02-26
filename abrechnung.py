@@ -15,20 +15,20 @@ gbo = {
     "60": {"beschr": "Konsilium", "preis": 6.99},
 }
 
-medikamente = {"Metoprolol_oral": {"gbo": "",
+medikamente = {"Metoprolol_oral": {"gbo": "MEDHCT",
                                    "beschr": "Metoprolol oral",
                                    "regex": r"\d[^\dMm]*[Mm]",
                                    "prices": {datetime(2022, 10, 1): 0.16,
                                               }
                                    },
-               "Metoprolol_iv": {"gbo": "",
+               "Metoprolol_iv": {"gbo": "MEDHCT",
                                  "beschr": "Metoprolol i.v.",
                                  "regex": r"\d[^\dAa]*[Aa]",
                                  "prices": {datetime(2022, 10, 1): 4.30,
                                             datetime(2023, 1, 3): 5.12,
                                             }
                                  },
-               "Atenolol": {"gbo": "",
+               "Atenolol": {"gbo": "MEDHCT",
                             "beschr": "Atenolol oral",
                             "regex": r"\d[^\dBb]*[Bb]",
                             "prices": {datetime(2022, 12, 14): 0.25,

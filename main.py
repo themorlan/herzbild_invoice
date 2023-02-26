@@ -1,4 +1,5 @@
 # TODO: Archive .xlsx file on run?
+# TODO: Refresh GBO's on drugs
 
 from docxtpl import DocxTemplate
 from datetime import date, datetime, timedelta
