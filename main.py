@@ -147,7 +147,6 @@ def read_excel() -> pd.DataFrame:
               'Mahndatum': 'string',
               'Bereits Bezahlt': 'float64',
               'Zahlungseingang': 'string',
-              'Rechnung geschlossen': bool,
               'Rechnungsbetrag': 'float64',
               'Kontrastmittel': 'float64',
               'Kommentar': 'string',
