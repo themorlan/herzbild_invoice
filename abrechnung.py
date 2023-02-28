@@ -1,6 +1,7 @@
 from typing import Dict, List
 from babel.numbers import format_currency
 from datetime import datetime
+import pandas as pd
 
 gbo = {
     "1": {"beschr": "Beratung auch telefonisch", "preis": 4.66},
@@ -23,14 +24,14 @@ medikamente = {"Metoprolol_oral": {"gbo": "METO",
                                    },
                "Metoprolol_iv": {"gbo": "BELOC",
                                  "beschr": "Metoprolol i.v.",
-                                 "regex": r"\d[^\dAa]*[Aa]",
+                                 "regex": r"\d[^\dBb]*[Bb]",
                                  "prices": {datetime(2022, 10, 1): 4.30,
                                             datetime(2023, 1, 3): 5.12,
                                             }
                                  },
                "Atenolol": {"gbo": "ATEN",
                             "beschr": "Atenolol oral",
-                            "regex": r"\d[^\dBb]*[Bb]",
+                            "regex": r"\d[^\dAa]*[Aa]",
                             "prices": {datetime(2022, 12, 14): 0.25,
                                        datetime(2023, 1, 3): 0.23,
                                        }
@@ -118,11 +119,11 @@ versicherungen = {
 }
 
 
-def get_abrechnungsziffern(versicherung: str, abrechnungsziffern: str) -> Dict:
+def get_abrechnungsziffern(df: pd.Series) -> Dict:
     _result = []
-    if len(abrechnungsziffern) > 0:
+    if len(df.Abrechnungsziffern) > 0:
         try:
-            _ziffern_list = abrechnungsziffern.split(";")
+            _ziffern_list = df.Abrechnungsziffern.split(";")
             _tarif = {}
             for item in _ziffern_list:
                 item = item.strip(" ").split(",")
@@ -130,7 +131,7 @@ def get_abrechnungsziffern(versicherung: str, abrechnungsziffern: str) -> Dict:
         except:
             raise KeyError("Die angegebenen Abrechnungsziffern haben nicht das richtige Format.")
     else:
-        _tarif = versicherungen[versicherung]
+        _tarif = versicherungen[df.Versicherung]
     _gesamtsumme = 0
     for index, ziffer in enumerate(_tarif.keys(), start=1):
         _dict = {'pos': index,
@@ -142,7 +143,7 @@ def get_abrechnungsziffern(versicherung: str, abrechnungsziffern: str) -> Dict:
                  'anzahl': '1',
                  'betrag': format_currency(gbo[ziffer]['preis'] * _tarif[ziffer], 'EUR', format='#.00 ¤',
                                            locale='de_DE', currency_digits=False),
-                 'betrag_raw': round(gbo[ziffer]['preis'] * _tarif[ziffer], 2),
+                 'betrag_raw': gbo[ziffer]['preis'] * _tarif[ziffer] if df.Rechnungsdatum < datetime(2023, 1, 25) else round(gbo[ziffer]['preis'] * _tarif[ziffer], 2),
                  }
         _gesamtsumme += _dict['betrag_raw']
         _result.append(_dict)

@@ -1,5 +1,5 @@
 # TODO: Archive .xlsx file on run?
-# TODO: Refresh GBO's on drugs
+# TODO: Catch all errors in msg-box?
 
 from docxtpl import DocxTemplate
 from datetime import date, datetime, timedelta
@@ -28,7 +28,7 @@ Path("Vorlagen").mkdir(exist_ok=True)
 
 
 def create_context(df: pd.Series) -> Dict:
-    _abrechnung = get_abrechnungsziffern(df.Versicherung, df.Abrechnungsziffern)
+    _abrechnung = get_abrechnungsziffern(df)
     lfd_nummer_tabelle = len(_abrechnung['tabelle']) + 1
     if df.Medikamente != "":
         for drug_name, data in medikamente.items():
@@ -84,6 +84,7 @@ def create_context(df: pd.Series) -> Dict:
     # Gesamtsumme has to be recalculated after messing with entries for contrast media and drugs
     _abrechnung['gesamtsumme'] = format_currency(_abrechnung['gesamtsumme_raw'], 'EUR', format='#.00 ¤', locale='de_DE',
                                                  currency_digits=False)
+    _abrechnung['gesamtsumme_raw'] = round(_abrechnung['gesamtsumme_raw'], 2)
 
     _context = {'Anrede': df.Anrede,
                 'Titel': df.Titel,
