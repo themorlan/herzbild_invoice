@@ -3,12 +3,33 @@ from main import read_excel
 from datetime import datetime
 from sys import argv
 import plotly.express as px
+import plotly.graph_objects as go
 from babel.dates import format_datetime
 from babel.numbers import format_currency
 from docxtpl import DocxTemplate, InlineImage
 from docx.shared import Mm
 import os
 from pathlib import Path
+
+custom_template = {
+    "layout": go.Layout(
+        font={
+            "family": "Nunito",
+            "size": 12,
+            "color": "#707070",
+        },
+        title={
+            "font": {
+                "family": "Lato",
+                "size": 18,
+                "color": "#1f1f1f",
+            },
+        },
+        plot_bgcolor="#ffffff",
+        paper_bgcolor="#ffffff",
+        colorway=px.colors.qualitative.G10,
+    )
+}
 
 QUARTERS = {
     "1": ["01", "02", "03"],
@@ -33,6 +54,11 @@ abr_to_month = {
 }
 
 
+def to_eur(amount: int) -> str:
+    return format_currency(amount, 'EUR', format='#,##0\xa0¤', locale='de_DE', currency_digits=False)
+
+
+
 def main():
     Path("Reporting").mkdir(exist_ok=True)
     df = read_excel()
@@ -44,7 +70,7 @@ def main():
         (df['Untersuchungsdatum'].dt.quarter == quarter) & (df['Untersuchungsdatum'].dt.year == year)]
     exams_in_quarter_vorjahr = df.loc[(df['Untersuchungsdatum'].dt.quarter == quarter) & (df['Untersuchungsdatum'].dt.year == year - 1)]
 
-    fig_rechn_bez = px.pie(exams_in_quarter, names='Rechnung bezahlt', title='Rechnung bezahlt')
+    fig_rechn_bez = px.pie(exams_in_quarter, names='Rechnung bezahlt', title='Rechnung bezahlt', template=custom_template)
     fig_rechn_bez.update_layout(legend=dict(
         yanchor="top",
         y=1,
@@ -53,7 +79,7 @@ def main():
         font=dict(size=13)
     ))
     fig_rechn_bez.write_image("fig_rechn_bez.jpeg")
-    fig_vers = px.pie(exams_in_quarter, names='Versicherung', title='Versicherungsart')
+    fig_vers = px.pie(exams_in_quarter, names='Versicherung', title='Versicherungsart', template=custom_template)
     fig_vers.update_layout(legend=dict(
         yanchor="top",
         y=1,
@@ -62,7 +88,7 @@ def main():
         font=dict(size=13)
     ))
     fig_vers.write_image("fig_vers.jpeg")
-    fig_umsatz = px.histogram(df, x="Monat", y="Bereits Bezahlt")
+    fig_umsatz = px.histogram(df, x="Monat", y="Rechnungsbetrag", template=custom_template)
     fig_umsatz.update_layout(yaxis_ticksuffix=' €', yaxis_tickformat='.,', yaxis_title='Umsatz', xaxis_title=year)
     fig_umsatz.write_image("fig_umsatz.jpeg")
 
@@ -73,15 +99,19 @@ def main():
         "fig_umsatz": InlineImage(tpl, image_descriptor='fig_umsatz.jpeg', width=Mm(165), height=Mm(117)),
         "quarter": quarter,
         "year": year,
+        "heute": datetime.today().strftime("%d.%m.%Y"),
         "month_1": abr_to_month[QUARTERS[str(quarter)][0]],
         "month_2": abr_to_month[QUARTERS[str(quarter)][1]],
         "month_3": abr_to_month[QUARTERS[str(quarter)][2]],
         "u_month_1": len(exams_in_quarter.loc[exams_in_quarter['Monat'] == abr_to_month[QUARTERS[str(quarter)][0]]].index),
         "u_month_2": len(exams_in_quarter.loc[exams_in_quarter['Monat'] == abr_to_month[QUARTERS[str(quarter)][1]]].index),
         "u_month_3": len(exams_in_quarter.loc[exams_in_quarter['Monat'] == abr_to_month[QUARTERS[str(quarter)][2]]].index),
+        "s_month_1": to_eur(exams_in_quarter.loc[exams_in_quarter['Monat'] == abr_to_month[QUARTERS[str(quarter)][0]], "Rechnungsbetrag"].sum()),
+        "s_month_2": to_eur(exams_in_quarter.loc[exams_in_quarter['Monat'] == abr_to_month[QUARTERS[str(quarter)][1]], "Rechnungsbetrag"].sum()),
+        "s_month_3": to_eur(exams_in_quarter.loc[exams_in_quarter['Monat'] == abr_to_month[QUARTERS[str(quarter)][2]], "Rechnungsbetrag"].sum()),
         "u_ges": len(exams_in_quarter.index),
-        "umsatz": format_currency(exams_in_quarter['Bereits Bezahlt'].sum(), 'EUR', format='#,##0\xa0¤', locale='de_DE', currency_digits=False),
-        "umsatz_vorjahr": exams_in_quarter_vorjahr['Bereits Bezahlt'].sum() if not exams_in_quarter_vorjahr.empty else "Nicht verfügbar.",}
+        "umsatz": to_eur(exams_in_quarter['Rechnungsbetrag'].sum()),
+        "umsatz_vorjahr": to_eur(exams_in_quarter_vorjahr['Rechnungsbetrag'].sum()) if not exams_in_quarter_vorjahr.empty else "Nicht verfügbar.",}
 
     tpl.render(context)
     tpl.save(f"Reporting/Reporting_Q{quarter}_{year}.docx")
