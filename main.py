@@ -197,7 +197,6 @@ def write_excel(excel_book: Tuple[Workbook, Tuple[str]], column: str, row: int, 
 def main():
     data = read_excel()
     excel_book = initialize_excel_writer()
-    datev_list = []
     for idx, row in data.iterrows():
         _context = create_context(row)
         if not row['Rechnung erstellt']:
@@ -210,35 +209,11 @@ def main():
                 write_excel(excel_book=excel_book, column='Rechnungsdatum', row=idx, value=today_str)
             write_excel(excel_book=excel_book, column='Rechnungsbetrag', row=idx, value=_context['Gesamtbetrag_raw'])
             write_excel(excel_book=excel_book, column='Rechnung erstellt', row=idx, value=True)
-            _context["Buchungstext"] = f"{_context['Nachname']} {str(_context['RG_Nummer'])[1:]}"
-            _context["Gesamtbetrag"] = _context["Gesamtbetrag"][:-2]
-            datev_list.append(_context)
         elif row.Mahnung and pd.isnull(row.Mahndatum):
             create_mahnung(context=_context,
                            export_filename=f"neue_Mahnungen/Mahnung_{row.Rechnungsnummer}_{row.Geburtsdatum.strftime('%d.%m.%Y')}.docx")
             write_excel(excel_book=excel_book, column='Mahnung', row=idx, value=True)
             write_excel(excel_book=excel_book, column='Mahndatum', row=idx, value=today_str)
-    datev = pd.DataFrame.from_dict(datev_list)
-    datev.rename(columns={"Gesamtbetrag": "Umsatz", "RG_Nummer": "Rechnungsnummer", "RG_Datum": "Belegdatum",
-                          "Untersuchungsdatum": "Leistungsdatum"},
-                 inplace=True)
-    datev["S/H"] = "H"
-    datev["Gegenkonto"] = "1410"
-    datev["Erlöskonto"] = "8000"
-    if not datev.empty:
-        datev.to_csv(f"neue_Rechnungen/HerzBild_Datev_export_{today_str}.csv",
-                     index=False,
-                     sep=";",
-                     encoding="UTF-8-sig",
-                     columns=[
-                         "Umsatz",
-                         "Gegenkonto",
-                         "Rechnungsnummer",
-                         "Belegdatum",
-                         "S/H",
-                         "Erlöskonto",
-                         "Buchungstext",
-                         "Leistungsdatum"], )
     excel_book[0].save(SOURCE_FILE)
 
 
