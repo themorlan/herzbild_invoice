@@ -57,6 +57,7 @@ def main():
         sheet.cell(row=_row_nr, column=get_column_index('Rechnung erstellt', _header) + 1, value=False)
         sheet.cell(row=_row_nr, column=get_column_index('Mahnung', _header) + 1, value=False)
         sheet.cell(row=_row_nr, column=get_column_index('Storno', _header) + 1, value=False)
+        sheet.cell(row=_row_nr, column=get_column_index('Rechnung bezahlt', _header) + 1, value=False)
         if not _match['Adresse'].isna().any():
             _adresse = _match['Adresse'].item().split(", ")
             sheet.cell(row=_row_nr, column=get_column_index('Strasse', _header) + 1, value=_adresse[0])

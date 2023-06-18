@@ -13,6 +13,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.workbook.workbook import Workbook
 import re
 import pyautogui
+import traceback
 
 SOURCE_FILE = "Rechnungsliste_HerzBild.xlsx"
 TEMPLATE_FILE = "Vorlagen/Musterrechnung_HerzBild_Vorlage.docx"
@@ -218,4 +219,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        with open("fehler.txt", "w") as file:
+            file.write(str(e))
+            file.write(traceback.format_exc())
