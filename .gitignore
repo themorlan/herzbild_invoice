@@ -2,3 +2,4 @@
 .idea
 venv
 .xlsx
+credentials.py

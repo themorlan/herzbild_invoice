@@ -14,6 +14,9 @@ from openpyxl.workbook.workbook import Workbook
 import re
 import pyautogui
 import traceback
+import http.client
+import urllib
+from credentials import credentials
 
 SOURCE_FILE = "Rechnungsliste_HerzBild.xlsx"
 TEMPLATE_FILE = "Vorlagen/Musterrechnung_HerzBild_Vorlage.docx"
@@ -26,6 +29,17 @@ today_str = today.strftime("%d.%m.%Y")
 Path("neue_Rechnungen").mkdir(exist_ok=True)
 Path("neue_Mahnungen").mkdir(exist_ok=True)
 Path("Vorlagen").mkdir(exist_ok=True)
+
+
+def send_msg_to_pushover(msg: str) -> None:
+    conn = http.client.HTTPSConnection("api.pushover.net:443")
+    conn.request("POST", "/1/messages.json",
+      urllib.parse.urlencode({
+        "token": credentials["pushover_token"],
+        "user": credentials["pushover_user"],
+        "message": msg,
+      }), { "Content-type": "application/x-www-form-urlencoded" })
+    conn.getresponse()
 
 
 def create_context(df: pd.Series) -> Dict:
@@ -222,6 +236,5 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        with open("fehler.txt", "w") as file:
-            file.write(str(e))
-            file.write(traceback.format_exc())
+        send_msg_to_pushover(str(e))
+        send_msg_to_pushover(traceback.format_exc())
