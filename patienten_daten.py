@@ -4,6 +4,8 @@ from openpyxl.worksheet.worksheet import Worksheet
 import pathlib
 from typing import Union
 from datetime import date, datetime
+from main import send_msg_to_pushover
+import traceback
 
 SOURCE_FILE = "Rechnungsliste_HerzBild.xlsx"
 
@@ -67,4 +69,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        send_msg_to_pushover(str(e))
+        send_msg_to_pushover(traceback.format_exc())
