@@ -32,7 +32,8 @@ Path("Vorlagen").mkdir(exist_ok=True)
 
 
 def send_msg_to_pushover(msg: str) -> None:
-    conn = http.client.HTTPSConnection("api.pushover.net:443")
+    conn = http.client.HTTPSConnection("172.18.222.12", port=8080, timeout=2)
+    conn.set_tunnel("api.pushover.net:443")
     conn.request("POST", "/1/messages.json",
       urllib.parse.urlencode({
         "token": credentials["pushover_token"],
