@@ -3,6 +3,17 @@ from babel.numbers import format_currency
 from datetime import datetime
 import pandas as pd
 
+
+def get_price_for_gbo(gbo_code: str, date: datetime) -> float:
+    price_for_code = {
+        "DR": {
+            datetime(2022, 10, 1): 1.73,
+            datetime(2023, 11, 20): 2.06,
+            }
+    }
+    return price_for_code[gbo_code][find_associated_date(date, price_for_code[gbo_code].keys())]
+
+
 gbo = {
     "1": {"beschr": "Beratung auch telefonisch", "preis": 4.66},
     "5": {"beschr": "Untersuchung, symptombezogen", "preis": 4.66},
@@ -134,16 +145,19 @@ def get_abrechnungsziffern(df: pd.Series) -> Dict:
         _tarif = versicherungen[df.Versicherung]
     _gesamtsumme = 0
     for index, ziffer in enumerate(_tarif.keys(), start=1):
+        betrag = gbo[ziffer]['preis']
+        if ziffer == "DR":
+            betrag = get_price_for_gbo(ziffer, df.Rechnungsdatum)
         _dict = {'pos': index,
                  'gbo': ziffer,
                  'beschr': gbo[ziffer]['beschr'],
-                 'preis': format_currency(gbo[ziffer]['preis'], 'EUR', format='#.00', locale='de_DE',
+                 'preis': format_currency(betrag, 'EUR', format='#.00', locale='de_DE',
                                           currency_digits=False),
                  'faktor': _tarif[ziffer],
                  'anzahl': '1',
-                 'betrag': format_currency(gbo[ziffer]['preis'] * _tarif[ziffer], 'EUR', format='#.00 ¤',
+                 'betrag': format_currency(betrag * _tarif[ziffer], 'EUR', format='#.00 ¤',
                                            locale='de_DE', currency_digits=False),
-                 'betrag_raw': gbo[ziffer]['preis'] * _tarif[ziffer] if df.Rechnungsdatum < datetime(2023, 1, 25) else round(gbo[ziffer]['preis'] * _tarif[ziffer], 2),
+                 'betrag_raw': betrag * _tarif[ziffer] if df.Rechnungsdatum < datetime(2023, 1, 25) else round(betrag * _tarif[ziffer], 2),
                  }
         _gesamtsumme += _dict['betrag_raw']
         _result.append(_dict)
