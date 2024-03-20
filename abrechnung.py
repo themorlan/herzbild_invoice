@@ -14,6 +14,35 @@ def get_price_for_gbo(gbo_code: str, date: datetime) -> float:
     return price_for_code[gbo_code][find_associated_date(date, price_for_code[gbo_code].keys())]
 
 
+def find_associated_date(input_date: datetime, dates_list: List[datetime]):
+    # initialize variables for closest older date and time difference
+    closest_date = None
+    min_time_diff = None
+
+    # loop through dates in list
+    for date in dates_list:
+        # calculate time difference between input date and list date
+        time_diff = input_date - date
+
+        # check if list date is older than input date
+        if time_diff.days > 0:
+            # check if this is the first older date found or if it's closer than previous closest date
+            if closest_date is None or time_diff < min_time_diff:
+                closest_date = date
+                min_time_diff = time_diff
+    if closest_date is None:
+        raise ValueError(
+            f"Es konnte kein Medikamentenpreis für das Datum {input_date.strftime('%d.%m.%Y')} gefunden werden.")
+
+    # print closest older date found
+    return closest_date
+
+
+def find_correct_drug_prizes(untersuchungsdatum: datetime, drug_name: str) -> float:
+    _dict = medikamente[drug_name]
+    return _dict["prices"][find_associated_date(untersuchungsdatum, _dict["prices"].keys())]
+
+
 gbo = {
     "1": {"beschr": "Beratung auch telefonisch", "preis": 4.66},
     "5": {"beschr": "Untersuchung, symptombezogen", "preis": 4.66},
@@ -156,6 +185,8 @@ def get_abrechnungsziffern(df: pd.Series) -> Dict:
         betrag = gbo[ziffer]['preis']
         if ziffer == "DR":
             betrag = get_price_for_gbo(ziffer, df.Rechnungsdatum)
+        elif ziffer == "614" and df.Rechnungsdatum < datetime(2023, 3, 10):
+            continue
         _dict = {'pos': index,
                  'gbo': ziffer,
                  'beschr': gbo[ziffer]['beschr'],
@@ -172,32 +203,3 @@ def get_abrechnungsziffern(df: pd.Series) -> Dict:
     return {'tabelle': _result,
             'gesamtsumme': format_currency(_gesamtsumme, 'EUR', format='#.00 ¤', locale='de_DE', currency_digits=False),
             'gesamtsumme_raw': _gesamtsumme}
-
-
-def find_associated_date(input_date: datetime, dates_list: List[datetime]):
-    # initialize variables for closest older date and time difference
-    closest_date = None
-    min_time_diff = None
-
-    # loop through dates in list
-    for date in dates_list:
-        # calculate time difference between input date and list date
-        time_diff = input_date - date
-
-        # check if list date is older than input date
-        if time_diff.days > 0:
-            # check if this is the first older date found or if it's closer than previous closest date
-            if closest_date is None or time_diff < min_time_diff:
-                closest_date = date
-                min_time_diff = time_diff
-    if closest_date is None:
-        raise ValueError(
-            f"Es konnte kein Medikamentenpreis für das Datum {input_date.strftime('%d.%m.%Y')} gefunden werden.")
-
-    # print closest older date found
-    return closest_date
-
-
-def find_correct_drug_prizes(untersuchungsdatum: datetime, drug_name: str) -> float:
-    _dict = medikamente[drug_name]
-    return _dict["prices"][find_associated_date(untersuchungsdatum, _dict["prices"].keys())]
