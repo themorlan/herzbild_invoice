@@ -185,7 +185,7 @@ def get_abrechnungsziffern(df: pd.Series) -> Dict:
         betrag = gbo[ziffer]['preis']
         if ziffer == "DR":
             betrag = get_price_for_gbo(ziffer, df.Rechnungsdatum)
-        elif ziffer == "614" and df.Rechnungsdatum < datetime(2023, 3, 10):
+        elif ziffer == "614" and df.Rechnungsdatum < datetime(2024, 3, 10):
             continue
         _dict = {'pos': index,
                  'gbo': ziffer,
